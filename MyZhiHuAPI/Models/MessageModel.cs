@@ -10,34 +10,34 @@ public class MessageModel<T>
     /// <summary>
     /// 状态码
     /// </summary>
-    public int status { get; set; } = 200;
+    public int Status { get; set; } = 200;
     /// <summary>
     /// 操作是否成功
     /// </summary>
-    public bool success { get; set; } = false;
+    public bool IsSuccess { get; set; } = false;
     /// <summary>
     /// 返回信息
     /// </summary>
-    public string msg { get; set; } = "";
+    public string Msg { get; set; } = "";
     /// <summary>
     /// 返回数据集合
     /// </summary>
-    public T? response { get; set; } = default(T);
+    public T? Response { get; set; } = default(T);
     /// <summary>
     /// 返回数据集合
     /// </summary>
-    public string ToString()
+    public override string ToString()
     {
-        var code = success ? "true" : "false";
+        var code = IsSuccess ? "true" : "false";
 
         var data = new JObject
         {
-            new JProperty("status", status),
+            new JProperty("status", Status),
             new JProperty("success", code),
-            new JProperty("msg", msg)
+            new JProperty("msg", Msg)
         };
 
-        if (response != null) data.Add(new JProperty("response", response));
+        if (Response != null) data.Add(new JProperty("response", Response));
 
         return data.ToString();
     }
@@ -53,10 +53,10 @@ public class MessageModel<T>
     {
         return new MessageModel<T?>
         {
-            msg = msg,
-            response = response,
-            status = status,
-            success = success
+            Msg = msg,
+            Response = response,
+            Status = status,
+            IsSuccess = success
         };
     }
     /// <summary>
