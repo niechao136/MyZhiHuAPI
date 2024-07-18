@@ -33,23 +33,16 @@ builder.Services.AddAuthentication(options =>
             context.HandleResponse();
 
             var msg = "令牌不存在或者令牌错误";
-            var code = 401;
             if (context.AuthenticateFailure?.GetType() == typeof(SecurityTokenExpiredException))
             {
                 msg = "令牌已过期";
-                code = 500;
             }
-            var payload = MessageModel<string>.Fail(msg, code);
+            var payload = MessageModel<string>.Fail(msg, 500);
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = 200;
-            context.Response.WriteAsync(payload.ToString());
+            context.Response.WriteAsync(payload);
 
-            return Task.CompletedTask;
-        },
-        OnTokenValidated = context =>
-        {
-            context.Response.ContentType = "application/json";
             return Task.CompletedTask;
         }
     };
@@ -100,6 +93,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddApiVersioning();
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
+builder.Services.AddSingleton(new DbHelper(configuration));
 builder.Services.AddSingleton(new JwtHelper(configuration));
 
 var app = builder.Build();

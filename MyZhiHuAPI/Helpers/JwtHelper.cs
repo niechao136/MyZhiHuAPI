@@ -7,14 +7,14 @@ namespace MyZhiHuAPI.Helpers;
 
 public class JwtHelper(IConfiguration config)
 {
-    public string CreateToken(string userId)
+    public string CreateToken(int userId)
     {
         var claims = new[]
         {
             new Claim(ClaimTypes.Name, "u_admin"),
             new Claim(ClaimTypes.Role, "r_admin"),
             new Claim(JwtRegisteredClaimNames.Jti, "admin"),
-            new Claim("UserId", userId)
+            new Claim("UserId", userId.ToString())
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:SecretKey"]!));
@@ -26,7 +26,7 @@ public class JwtHelper(IConfiguration config)
             audience: config["Jwt:Audience"],
             claims: claims,
             notBefore: DateTime.Now,
-            expires: DateTime.Now.AddSeconds(30),
+            expires: DateTime.Now.AddMinutes(10),
             signingCredentials: sign
         );
 
