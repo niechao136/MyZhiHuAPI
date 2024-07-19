@@ -7,6 +7,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["MyZhiHuAPI/MyZhiHuAPI.csproj", "MyZhiHuAPI/"]
+RUN dotnet nuget remove source nuget.org
+RUN dotnet nuget add source https://mirrors.cloud.tencent.com/nuget/ -n tencent_nuget
 RUN dotnet restore "MyZhiHuAPI/MyZhiHuAPI.csproj"
 COPY . .
 WORKDIR "/src/MyZhiHuAPI"
