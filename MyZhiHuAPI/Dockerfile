@@ -1,5 +1,4 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
@@ -20,5 +19,4 @@ RUN dotnet publish "MyZhiHuAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publish /
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-RUN dotnet dev-certs https
-ENTRYPOINT ["dotnet", "MyZhiHuAPI.dll", "--urls=https://*:8080"]
+ENTRYPOINT ["dotnet", "MyZhiHuAPI.dll", "--urls=https://+:8080;http://+:8081"]

@@ -1,0 +1,14 @@
+﻿services:
+  my_zhi_hu_api:
+    image: my_zhi_hu_api
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:8080;http://+:8081
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=abc123
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/MyZhiHuAPI/Config/aspnetapp.pfx
+    build:
+      context: .
+      dockerfile: MyZhiHuAPI/Dockerfile
