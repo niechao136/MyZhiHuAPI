@@ -1,0 +1,1 @@
+docker create -p 8080:8080 -e ASPNETCORE_URLS="https://+;http://+" -e ASPNETCORE_HTTPS_PORTS=8080 -e ASPNETCORE_Kestrel__Certificates__Default__Password="abc123" -e ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx -v MyZhiHuAPIConfig:/https/ my_zhi_hu

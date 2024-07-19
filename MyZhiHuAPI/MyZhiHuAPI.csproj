@@ -24,8 +24,4 @@
       </Content>
     </ItemGroup>
 
-    <ItemGroup>
-      <None Include="wwwroot\config\aspnetapp.pfx" />
-    </ItemGroup>
-
 </Project>
