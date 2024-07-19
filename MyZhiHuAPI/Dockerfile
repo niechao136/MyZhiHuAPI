@@ -20,4 +20,5 @@ RUN dotnet publish "MyZhiHuAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publish /
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+RUN dotnet dev-certs https
 ENTRYPOINT ["dotnet", "MyZhiHuAPI.dll", "--urls=https://*:8080"]
