@@ -9,7 +9,7 @@ WORKDIR /src
 COPY ["MyZhiHuAPI/MyZhiHuAPI.csproj", "MyZhiHuAPI/"]
 RUN dotnet nuget remove source nuget.org
 RUN dotnet nuget add source https://nuget.cdn.azure.cn/v3/index.json -n cn
-RUN dotnet restore "MyZhiHuAPI/MyZhiHuAPI.csproj"
+RUN dotnet restore "MyZhiHuAPI/MyZhiHuAPI.csproj" --disable-parallel
 COPY . .
 WORKDIR "/src/MyZhiHuAPI"
 RUN dotnet build "MyZhiHuAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
