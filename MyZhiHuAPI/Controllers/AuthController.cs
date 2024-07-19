@@ -13,7 +13,7 @@ namespace MyZhiHuAPI.Controllers;
 public class AuthController(DbHelper dbHelper, JwtHelper jwtHelper) : BaseController
 {
     [HttpPost]
-    public ActionResult<string> Login(Auth request)
+    public ActionResult<string> Login(AuthLogin request)
     {
         using var conn = dbHelper.OpenConnection();
         const string query = "SELECT id FROM users WHERE username = @username AND password = @password";

@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace MyZhiHuAPI.Models;
@@ -41,7 +42,7 @@ public class MessageModel<T>
             new JProperty("msg", Msg)
         };
 
-        if (Response != null) data.Add(new JProperty("data", Response));
+        if (Response != null) data.Add(new JProperty("data", Response is string ? Response : JsonConvert.DeserializeObject(Response.ToString()!)));
 
         return data.ToString();
     }

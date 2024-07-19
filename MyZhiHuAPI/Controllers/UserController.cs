@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyZhiHuAPI.Helpers;
 using MyZhiHuAPI.Models;
@@ -10,7 +11,7 @@ namespace MyZhiHuAPI.Controllers;
 public class UserController(DbHelper dbHelper) : BaseController
 {
     [HttpPost]
-    public ActionResult<string> Register(UserAdd request)
+    public ActionResult<string> Register(UserRegister request)
     {
         using var conn = dbHelper.OpenConnection();
         const string query = "SELECT id FROM users WHERE username = @username";
@@ -30,5 +31,19 @@ public class UserController(DbHelper dbHelper) : BaseController
             phone = request.Phone
         });
         return Success("注册成功");
+    }
+
+    [HttpPost]
+    [Authorize]
+    public ActionResult<string> Info(UserInfo request)
+    {
+        using var conn = dbHelper.OpenConnection();
+        const string query =
+            """
+            SELECT id, username, nickname, questions, answers, commits, remarks,
+            watching_people, watching_question, update_at FROM users WHERE id = @id
+            """;
+        var users = conn.Query<User>(query, new { id = request.Id }).ToList();
+        return users.Count == 0 ? Fail("用户名不存在") : Success(users[0], "获取成功");
     }
 }
