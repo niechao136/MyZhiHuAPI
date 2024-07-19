@@ -8,7 +8,7 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["MyZhiHuAPI/MyZhiHuAPI.csproj", "MyZhiHuAPI/"]
 RUN dotnet nuget remove source nuget.org
-RUN dotnet nuget add source https://mirrors.cloud.tencent.com/nuget/ -n tencent_nuget
+RUN dotnet nuget add source https://nuget.cdn.azure.cn/v3/index.json -n cn
 RUN dotnet restore "MyZhiHuAPI/MyZhiHuAPI.csproj"
 COPY . .
 WORKDIR "/src/MyZhiHuAPI"
