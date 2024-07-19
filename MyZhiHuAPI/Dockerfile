@@ -19,4 +19,4 @@ RUN dotnet publish "MyZhiHuAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publish /
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "MyZhiHuAPI.dll", "--urls=https://+:8080;http://+:8081"]
+ENTRYPOINT ["dotnet", "MyZhiHuAPI.dll", "--urls=https://+:8080"]
