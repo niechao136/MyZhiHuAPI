@@ -2,11 +2,13 @@
   my_zhi_hu_api:
     image: my_zhi_hu_api
     container_name: my_zhi_hu_api
+    user: root
+    restart: always
     ports:
-      - "8080:8080"
+      - 8000:8000
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=https://+:8080
+      - ASPNETCORE_URLS=https://+:8000
       - ASPNETCORE_Kestrel__Certificates__Default__Password=abc123
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
     volumes:
