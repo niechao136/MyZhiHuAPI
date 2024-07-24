@@ -10,6 +10,18 @@ var builder = WebApplication.CreateBuilder(args);
 
 var configuration = builder.Configuration;
 
+const string myPolicy = "myPolicy";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(myPolicy, policyBuilder =>
+    {
+        policyBuilder.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -112,13 +124,15 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
+app.UseCors(myPolicy);
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auth}/{action=Login}/{id?}"
-).WithOpenApi();
+).WithOpenApi().RequireCors(myPolicy);
 
 
 app.Run();

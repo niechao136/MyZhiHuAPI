@@ -10,4 +10,9 @@ public class DbHelper(IConfiguration configuration)
         conn.Open();
         return conn;
     }
+
+    public string? GetConfig(string key)
+    {
+        return configuration[key];
+    }
 }
