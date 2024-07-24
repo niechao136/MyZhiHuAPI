@@ -47,5 +47,5 @@ public class UserRegister
 
 public class UserInfo
 {
-    public int Id { get; set; }
+    public int? Id { get; set; }
 }

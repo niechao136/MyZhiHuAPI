@@ -31,7 +31,7 @@ public class MessageModel<T>
     /// <summary>
     /// 返回消息字符串
     /// </summary>
-    public override string ToString()
+    public JObject ToJObject()
     {
         var code = IsSuccess ? "true" : "false";
 
@@ -44,7 +44,7 @@ public class MessageModel<T>
 
         if (Response != null) data.Add(new JProperty("data", Response is string ? Response : JsonConvert.DeserializeObject(Response.ToString()!)));
 
-        return data.ToString();
+        return data;
     }
 
     /// <summary>
@@ -72,9 +72,9 @@ public class MessageModel<T>
     /// <param name="msg">消息</param>
     /// <param name="response">数据</param>
     /// <returns></returns>
-    public static string Success(string msg, T? response)
+    public static JObject Success(string msg, T? response)
     {
-        return Message(true, msg, response).ToString();
+        return Message(true, msg, response).ToJObject();
     }
 
     /// <summary>
@@ -83,8 +83,8 @@ public class MessageModel<T>
     /// <param name="msg">消息</param>
     /// <param name="status">状态码</param>
     /// <returns></returns>
-    public static string Fail(string msg, int status = 200)
+    public static JObject Fail(string msg, int status = 200)
     {
-        return Message(false, msg, default, status).ToString();
+        return Message(false, msg, default, status).ToJObject();
     }
 }

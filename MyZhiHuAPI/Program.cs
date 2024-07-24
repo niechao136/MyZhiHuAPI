@@ -49,7 +49,7 @@ builder.Services.AddAuthentication(options =>
             {
                 msg = "令牌已过期";
             }
-            var payload = MessageModel<string>.Fail(msg, 500);
+            var payload = MessageModel<string>.Fail(msg, 500).ToString();
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = 200;

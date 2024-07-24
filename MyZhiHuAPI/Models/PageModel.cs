@@ -40,7 +40,7 @@ public class PageModel<T>
     /// <summary>
     /// 返回消息字符串
     /// </summary>
-    public override string ToString()
+    public JObject ToJObject()
     {
         var code = IsSuccess ? "true" : "false";
 
@@ -54,7 +54,7 @@ public class PageModel<T>
             new JProperty("size", PageSize)
         };
 
-        return data.ToString();
+        return data;
     }
 
     /// <summary>

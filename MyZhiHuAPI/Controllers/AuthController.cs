@@ -1,10 +1,9 @@
-using System.IdentityModel.Tokens.Jwt;
 using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using MyZhiHuAPI.Helpers;
 using MyZhiHuAPI.Models;
+using Newtonsoft.Json.Linq;
 
 namespace MyZhiHuAPI.Controllers;
 
@@ -13,7 +12,7 @@ namespace MyZhiHuAPI.Controllers;
 public class AuthController(DbHelper dbHelper, JwtHelper jwtHelper) : BaseController
 {
     [HttpPost]
-    public ActionResult<string> Login(AuthLogin request)
+    public ActionResult<JObject> Login(AuthLogin request)
     {
         using var conn = dbHelper.OpenConnection();
         const string query = "SELECT id FROM users WHERE username = @username AND password = @password";
@@ -26,15 +25,11 @@ public class AuthController(DbHelper dbHelper, JwtHelper jwtHelper) : BaseContro
 
     [Authorize]
     [HttpPost]
-    public ActionResult<string> Logout()
+    public ActionResult<JObject> Logout()
     {
-        var jwtHandler = new JwtSecurityTokenHandler();
-        var token = HttpContext.Request.Headers.Authorization;
-        token = token.IsNullOrEmpty() ? "" : token.ToString().Replace("Bearer ", "");
-        if (token.IsNullOrEmpty() || !jwtHandler.CanReadToken(token)) return Fail("token无效，请重新登录！");
-        var jwtToken = jwtHandler.ReadJwtToken(token);
-        var userId = jwtToken.Claims.SingleOrDefault(s => s.Type == "UserId")?.Value;
-        jwtHelper.CreateToken(int.Parse(userId!));
+        var token = GetUserId(HttpContext.Request.Headers.Authorization);
+        if (token == "token") return Fail("token无效，请重新登录！");
+        jwtHelper.CreateToken(int.Parse(token));
         return Success("退出成功！");
     }
 }

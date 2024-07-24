@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyZhiHuAPI.Helpers;
 using MyZhiHuAPI.Models;
+using Newtonsoft.Json.Linq;
 
 namespace MyZhiHuAPI.Controllers;
 
@@ -11,7 +12,7 @@ namespace MyZhiHuAPI.Controllers;
 public class UserController(DbHelper dbHelper) : BaseController
 {
     [HttpPost]
-    public ActionResult<string> Register(UserRegister request)
+    public ActionResult<JObject> Register(UserRegister request)
     {
         using var conn = dbHelper.OpenConnection();
         const string query = "SELECT id FROM users WHERE username = @username";
@@ -35,15 +36,22 @@ public class UserController(DbHelper dbHelper) : BaseController
 
     [HttpPost]
     [Authorize]
-    public ActionResult<string> Info(UserInfo request)
+    public ActionResult<JObject> Info(UserInfo request)
     {
+        var id = request.Id;
+        if (id == null)
+        {
+            var token = GetUserId(HttpContext.Request.Headers.Authorization);
+            if (token == "token") return Fail("token无效，请重新登录！");
+            id = int.Parse(token);
+        }
         using var conn = dbHelper.OpenConnection();
         const string query =
             """
             SELECT id, username, nickname, questions, answers, commits, remarks,
             watching_people, watching_question, update_at FROM users WHERE id = @id
             """;
-        var users = conn.Query<User>(query, new { id = request.Id }).ToList();
+        var users = conn.Query<User>(query, new { id }).ToList();
         return users.Count == 0 ? Fail("用户名不存在") : Success(users[0], "获取成功");
     }
 }
