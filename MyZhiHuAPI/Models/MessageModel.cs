@@ -16,7 +16,7 @@ public class MessageModel<T>
     /// <summary>
     /// 操作是否成功
     /// </summary>
-    public bool IsSuccess { get; set; } = false;
+    public bool Success { get; set; } = false;
 
     /// <summary>
     /// 返回信息
@@ -26,23 +26,21 @@ public class MessageModel<T>
     /// <summary>
     /// 返回数据集合
     /// </summary>
-    public T? Response { get; set; } = default(T);
+    public T? Data { get; set; } = default(T);
 
     /// <summary>
     /// 返回消息字符串
     /// </summary>
     public JObject ToJObject()
     {
-        var code = IsSuccess ? "true" : "false";
-
         var data = new JObject
         {
             new JProperty("status", Status),
-            new JProperty("success", code),
+            new JProperty("success", Success),
             new JProperty("msg", Msg)
         };
 
-        if (Response != null) data.Add(new JProperty("data", Response is string ? Response : JsonConvert.DeserializeObject(Response.ToString()!)));
+        if (Data != null) data.Add(new JProperty("data", Data is string ? Data : JsonConvert.DeserializeObject(Data.ToString()!)));
 
         return data;
     }
@@ -55,14 +53,14 @@ public class MessageModel<T>
     /// <param name="response">数据</param>
     /// <param name="status">状态码</param>
     /// <returns></returns>
-    public static MessageModel<T?> Message(bool success, string msg, T? response, int status = 200)
+    private static MessageModel<T> Message(bool success, string msg, int status = 200, T? response = default)
     {
-        return new MessageModel<T?>
+        return new MessageModel<T>
         {
             Msg = msg,
-            Response = response,
+            Data = response,
             Status = status,
-            IsSuccess = success
+            Success = success
         };
     }
 
@@ -72,9 +70,9 @@ public class MessageModel<T>
     /// <param name="msg">消息</param>
     /// <param name="response">数据</param>
     /// <returns></returns>
-    public static JObject Success(string msg, T? response)
+    public static MessageModel<T> SuccessMsg(string msg, T response)
     {
-        return Message(true, msg, response).ToJObject();
+        return Message(true, msg, 200, response);
     }
 
     /// <summary>
@@ -83,8 +81,8 @@ public class MessageModel<T>
     /// <param name="msg">消息</param>
     /// <param name="status">状态码</param>
     /// <returns></returns>
-    public static JObject Fail(string msg, int status = 200)
+    public static MessageModel<T> FailMsg(string msg, int status = 500)
     {
-        return Message(false, msg, default, status).ToJObject();
+        return Message(false, msg, status);
     }
 }

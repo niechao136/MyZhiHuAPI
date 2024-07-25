@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using MyZhiHuAPI.Helpers;
-using Newtonsoft.Json.Linq;
+using MyZhiHuAPI.Models;
 
 namespace MyZhiHuAPI.Controllers;
 
@@ -10,9 +10,9 @@ namespace MyZhiHuAPI.Controllers;
 public class ServerController(DbHelper dbHelper) : BaseController
 {
     [HttpPost]
-    public ActionResult<JObject> Info()
+    public MessageModel<string> Info()
     {
         var version = dbHelper.GetConfig("Version");
-        return version.IsNullOrEmpty() ? Fail("版本号未配置") : Success(version!);
+        return version.IsNullOrEmpty() ? Fail<string>("版本号未配置") : Success<string>(version!);
     }
 }

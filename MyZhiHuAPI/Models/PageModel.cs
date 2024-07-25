@@ -15,7 +15,7 @@ public class PageModel<T>
     /// <summary>
     /// 操作是否成功
     /// </summary>
-    public bool IsSuccess { get; set; } = true;
+    public bool Success { get; set; } = true;
 
     /// <summary>
     /// 当前页标
@@ -42,12 +42,10 @@ public class PageModel<T>
     /// </summary>
     public JObject ToJObject()
     {
-        var code = IsSuccess ? "true" : "false";
-
         var data = new JObject
         {
             new JProperty("status", Status),
-            new JProperty("success", code),
+            new JProperty("success", Success),
             new JProperty("rows", Data),
             new JProperty("page", Page),
             new JProperty("total", TotalCount),
@@ -71,7 +69,7 @@ public class PageModel<T>
     {
         return new PageModel<T>
         {
-            IsSuccess = success,
+            Success = success,
             Status = status,
             Page = page,
             TotalCount = total,

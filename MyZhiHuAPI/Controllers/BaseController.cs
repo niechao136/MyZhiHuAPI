@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 using MyZhiHuAPI.Models;
-using Newtonsoft.Json.Linq;
 
 namespace MyZhiHuAPI.Controllers;
 
@@ -11,30 +10,25 @@ public class BaseController : Controller
 {
 
     [NonAction]
-    public JObject Success<T>(T response, string message = "成功")
+    protected static MessageModel<T> Success<T>(string message = "成功", T? response = default)
     {
-        return MessageModel<T>.Success(message, response);
-    }
-    [NonAction]
-    public JObject Success(string message = "成功")
-    {
-        return MessageModel<string>.Success(message, null);
+        return MessageModel<T>.SuccessMsg(message, response!);
     }
 
     [NonAction]
-    public JObject Fail(string message = "失败", int status = 500)
+    protected static MessageModel<T> Fail<T>(string message = "失败", int status = 500)
     {
-        return MessageModel<string>.Fail(message, status);
+        return MessageModel<T>.FailMsg(message, status);
     }
 
     [NonAction]
-    public JObject PageSuccess<T>(List<T> data, int page, int total, int size, int status = 200)
+    protected static PageModel<T> PageSuccess<T>(List<T> data, int page, int total, int size, int status = 200)
     {
-        return PageModel<T>.GetPage(true, page, total, size, data, status).ToJObject();
+        return PageModel<T>.GetPage(true, page, total, size, data, status);
     }
 
     [NonAction]
-    public string GetUserId(StringValues token)
+    protected static string GetUserId(StringValues token)
     {
         var jwtHandler = new JwtSecurityTokenHandler();
         var empty = token.IsNullOrEmpty() ? "" : token.ToString().Replace("Bearer ", "");

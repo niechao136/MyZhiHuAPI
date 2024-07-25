@@ -49,7 +49,7 @@ builder.Services.AddAuthentication(options =>
             {
                 msg = "令牌已过期";
             }
-            var payload = MessageModel<string>.Fail(msg, 500).ToString();
+            var payload = MessageModel<string>.FailMsg(msg).ToJObject().ToString();
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = 200;
@@ -113,9 +113,11 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+
 }
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // app.UseDefaultFiles();
 // app.UseStaticFiles();
