@@ -29,7 +29,7 @@ public class AnswerController(DbHelper dbHelper) : BaseController
              """;
         var answers = conn.Query<Answer>(query, new { questionId }).ToList();
         var total = conn.QueryFirstOrDefault<int>($"SELECT COUNT(DISTINCT id) FROM answers WHERE {isDelete + filter}");
-        return PageModel<Answer>.GetPage(true, page, total, size, answers);
+        return PageSuccess(answers, page, total, size);
     }
 
     [HttpPost]

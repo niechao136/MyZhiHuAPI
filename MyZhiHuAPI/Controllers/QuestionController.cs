@@ -27,7 +27,7 @@ public class QuestionController(DbHelper dbHelper) : BaseController
              """;
         var questions = conn.Query<Question>(query).ToList();
         var total = conn.QueryFirstOrDefault<int>($"SELECT COUNT(DISTINCT id) FROM questions WHERE {isDelete + filter}");
-        return PageModel<Question>.GetPage(true, page, total, size, questions);
+        return PageSuccess(questions, page, total, size);
     }
 
     [HttpPost]

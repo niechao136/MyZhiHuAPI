@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using CSRedis;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -107,6 +108,7 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 builder.Services.AddSingleton(new DbHelper(configuration));
 builder.Services.AddSingleton(new JwtHelper(configuration));
+builder.Services.AddSingleton(new CSRedisClient(configuration["Redis:ConnectionString"]));
 
 var app = builder.Build();
 

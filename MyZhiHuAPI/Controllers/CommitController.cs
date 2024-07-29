@@ -32,7 +32,7 @@ public class CommitController(DbHelper dbHelper) : BaseController
         var commits = conn.Query<Commit>(query, new { answerId, rootId }).ToList();
         const string sql = "SELECT COUNT(DISTINCT id) FROM commits WHERE answer_id = @answer_id AND root_id = @rootId";
         var total = conn.QueryFirstOrDefault<int>(sql, new { answerId, rootId });
-        return PageModel<Commit>.GetPage(true, page, total, size, commits);
+        return PageSuccess(commits, page, total, size);
     }
 
     [HttpPost]
