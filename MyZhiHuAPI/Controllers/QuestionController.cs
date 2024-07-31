@@ -1,3 +1,4 @@
+using CSRedis;
 using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,7 @@ namespace MyZhiHuAPI.Controllers;
 [Route("api/[controller]/[action]")]
 [ApiController]
 [Authorize]
-public class QuestionController(DbHelper dbHelper) : BaseController
+public class QuestionController(CSRedisClient csRedisClient, DbHelper dbHelper) : BaseController(csRedisClient)
 {
 
     [HttpPost]

@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using CSRedis;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
@@ -6,7 +7,7 @@ using MyZhiHuAPI.Models;
 
 namespace MyZhiHuAPI.Controllers;
 
-public class BaseController : Controller
+public class BaseController(CSRedisClient csRedisClient) : Controller
 {
 
     [NonAction]
@@ -35,6 +36,12 @@ public class BaseController : Controller
         if (empty.IsNullOrEmpty() || !jwtHandler.CanReadToken(empty)) return "token";
         var jwtToken = jwtHandler.ReadJwtToken(empty);
         return jwtToken.Claims.SingleOrDefault(s => s.Type == "UserId")?.Value!;
+    }
+
+    [NonAction]
+    protected static string CheckToken(string token)
+    {
+        return token;
     }
 
 }

@@ -1,3 +1,4 @@
+using CSRedis;
 using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,8 +9,9 @@ namespace MyZhiHuAPI.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-public class UserController(DbHelper dbHelper) : BaseController
+public class UserController(CSRedisClient csRedisClient, DbHelper dbHelper) : BaseController(csRedisClient)
 {
+
     [HttpPost]
     public MessageModel<string> Register(UserRegister request)
     {

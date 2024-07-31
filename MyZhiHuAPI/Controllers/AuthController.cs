@@ -1,3 +1,4 @@
+using CSRedis;
 using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ namespace MyZhiHuAPI.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-public class AuthController(DbHelper dbHelper, JwtHelper jwtHelper) : BaseController
+public class AuthController(CSRedisClient csRedisClient, DbHelper dbHelper, JwtHelper jwtHelper) : BaseController(csRedisClient)
 {
     [HttpPost]
     public MessageModel<string> Login(AuthLogin request)
