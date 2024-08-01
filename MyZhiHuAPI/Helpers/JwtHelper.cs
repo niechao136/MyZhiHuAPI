@@ -26,7 +26,7 @@ public class JwtHelper(IConfiguration config)
             audience: config["Jwt:Audience"],
             claims: claims,
             notBefore: DateTime.Now,
-            expires: DateTime.Now.AddMinutes(10),
+            expires: DateTime.Now.AddSeconds(10),
             signingCredentials: sign
         );
 

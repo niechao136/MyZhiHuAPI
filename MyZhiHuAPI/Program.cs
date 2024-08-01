@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MyZhiHuAPI.Helpers;
+using MyZhiHuAPI.Middleware;
 using MyZhiHuAPI.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -130,8 +131,13 @@ app.UseRouting();
 
 app.UseCors(myPolicy);
 
-app.UseAuthentication();
-app.UseAuthorization();
+// app.UseAuthentication();
+// app.UseAuthorization();
+
+app.UseMyAuthorize(option =>
+{
+    option.CsRedisClient = new CSRedisClient(configuration["Redis:ConnectionString"]);
+});
 
 app.MapControllerRoute(
     name: "default",

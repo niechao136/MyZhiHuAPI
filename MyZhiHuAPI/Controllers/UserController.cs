@@ -1,15 +1,14 @@
-using CSRedis;
 using Dapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyZhiHuAPI.Helpers;
+using MyZhiHuAPI.Middleware;
 using MyZhiHuAPI.Models;
 
 namespace MyZhiHuAPI.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-public class UserController(CSRedisClient csRedisClient, DbHelper dbHelper) : BaseController(csRedisClient)
+public class UserController(DbHelper dbHelper) : BaseController
 {
 
     [HttpPost]
@@ -36,15 +35,15 @@ public class UserController(CSRedisClient csRedisClient, DbHelper dbHelper) : Ba
     }
 
     [HttpPost]
-    [Authorize]
+    [MyAuthorize]
     public MessageModel<User> Info(UserInfo request)
     {
         var id = request.Id;
-        if (id == null)
+        if (request.Id == null)
         {
-            var token = GetUserId(HttpContext.Request.Headers.Authorization);
-            if (token == "token") return Fail<User>("token无效，请重新登录！");
-            id = int.Parse(token);
+            var res = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+            if (res == "error") return Fail<User>("令牌不存在或者令牌错误");
+            id = int.Parse(res);
         }
         using var conn = dbHelper.OpenConnection();
         const string query =

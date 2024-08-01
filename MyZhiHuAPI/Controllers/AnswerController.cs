@@ -1,16 +1,15 @@
-using CSRedis;
 using Dapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyZhiHuAPI.Helpers;
+using MyZhiHuAPI.Middleware;
 using MyZhiHuAPI.Models;
 
 namespace MyZhiHuAPI.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-[Authorize]
-public class AnswerController(CSRedisClient csRedisClient, DbHelper dbHelper) : BaseController(csRedisClient)
+[MyAuthorize]
+public class AnswerController(DbHelper dbHelper) : BaseController
 {
     [HttpPost]
     public PageModel<Answer> List(AnswerPage request)
@@ -37,8 +36,8 @@ public class AnswerController(CSRedisClient csRedisClient, DbHelper dbHelper) : 
     public MessageModel<Answer> Add(AnswerCreate request)
     {
         using var conn = dbHelper.OpenConnection();
-        var token = GetUserId(HttpContext.Request.Headers.Authorization);
-        if (token == "token") return Fail<Answer>("token无效，请重新登录！");
+        var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误");
         var ownerId = int.Parse(token);
         const string insert =
             """
@@ -60,8 +59,8 @@ public class AnswerController(CSRedisClient csRedisClient, DbHelper dbHelper) : 
     public MessageModel<Answer> Agree(AnswerAgree request)
     {
         using var conn = dbHelper.OpenConnection();
-        var token = GetUserId(HttpContext.Request.Headers.Authorization);
-        if (token == "token") return Fail<Answer>("token无效，请重新登录！");
+        var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误");
         var ownerId = int.Parse(token);
         var id = request.Id;
         var cancel = request.Cancel ?? false;
@@ -80,8 +79,8 @@ public class AnswerController(CSRedisClient csRedisClient, DbHelper dbHelper) : 
     public MessageModel<Answer> Remark(AnswerAgree request)
     {
         using var conn = dbHelper.OpenConnection();
-        var token = GetUserId(HttpContext.Request.Headers.Authorization);
-        if (token == "token") return Fail<Answer>("token无效，请重新登录！");
+        var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误");
         var ownerId = int.Parse(token);
         var id = request.Id;
         var cancel = request.Cancel ?? false;

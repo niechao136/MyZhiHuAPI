@@ -1,16 +1,15 @@
-using CSRedis;
 using Dapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyZhiHuAPI.Helpers;
+using MyZhiHuAPI.Middleware;
 using MyZhiHuAPI.Models;
 
 namespace MyZhiHuAPI.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-[Authorize]
-public class CommitController(CSRedisClient csRedisClient, DbHelper dbHelper) : BaseController(csRedisClient)
+[MyAuthorize]
+public class CommitController(DbHelper dbHelper) : BaseController
 {
     [HttpPost]
     public PageModel<Commit> List(CommitPage request)
@@ -40,8 +39,8 @@ public class CommitController(CSRedisClient csRedisClient, DbHelper dbHelper) : 
     public MessageModel<Commit> Add(CommitCreate request)
     {
         using var conn = dbHelper.OpenConnection();
-        var token = GetUserId(HttpContext.Request.Headers.Authorization);
-        if (token == "token") return Fail<Commit>("token无效，请重新登录！");
+        var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        if (token == "error") return Fail<Commit>("令牌不存在或者令牌错误");
         var ownerId = int.Parse(token);
         const string insert =
             """

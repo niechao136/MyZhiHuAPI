@@ -1,16 +1,15 @@
-using CSRedis;
 using Dapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyZhiHuAPI.Helpers;
+using MyZhiHuAPI.Middleware;
 using MyZhiHuAPI.Models;
 
 namespace MyZhiHuAPI.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-[Authorize]
-public class QuestionController(CSRedisClient csRedisClient, DbHelper dbHelper) : BaseController(csRedisClient)
+[MyAuthorize]
+public class QuestionController(DbHelper dbHelper) : BaseController
 {
 
     [HttpPost]
@@ -35,8 +34,8 @@ public class QuestionController(CSRedisClient csRedisClient, DbHelper dbHelper) 
     public MessageModel<Question> Add(QuestionCreate request)
     {
         using var conn = dbHelper.OpenConnection();
-        var token = GetUserId(HttpContext.Request.Headers.Authorization);
-        if (token == "token") return Fail<Question>("token无效，请重新登录！");
+        var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        if (token == "error") return Fail<Question>("令牌不存在或者令牌错误");
         var ownerId = int.Parse(token);
         const string insert =
             """
@@ -58,8 +57,8 @@ public class QuestionController(CSRedisClient csRedisClient, DbHelper dbHelper) 
     public MessageModel<Question> Watch(QuestionWatch request)
     {
         using var conn = dbHelper.OpenConnection();
-        var token = GetUserId(HttpContext.Request.Headers.Authorization);
-        if (token == "token") return Fail<Question>("token无效，请重新登录！");
+        var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        if (token == "error") return Fail<Question>("令牌不存在或者令牌错误");
         var ownerId = int.Parse(token);
         var id = request.Id;
         var cancel = request.Cancel ?? false;
