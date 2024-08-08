@@ -109,7 +109,10 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 builder.Services.AddSingleton(new DbHelper(configuration));
 builder.Services.AddSingleton(new JwtHelper(configuration));
-builder.Services.AddSingleton(new CSRedisClient(configuration["Redis:ConnectionString"]));
+var rabbitMqHelper = new RabbitMqHelper(configuration);
+builder.Services.AddSingleton(rabbitMqHelper);
+var redisClient = new CSRedisClient(configuration["Redis:ConnectionString"]);
+builder.Services.AddSingleton(redisClient);
 
 var app = builder.Build();
 
@@ -136,7 +139,11 @@ app.UseCors(myPolicy);
 
 app.UseMyAuthorize(option =>
 {
-    option.CsRedisClient = new CSRedisClient(configuration["Redis:ConnectionString"]);
+    option.CsRedisClient = redisClient;
+});
+app.UseRabbitMq(option =>
+{
+    option.Helper = rabbitMqHelper;
 });
 
 app.MapControllerRoute(
@@ -144,5 +151,6 @@ app.MapControllerRoute(
     pattern: "{controller=Auth}/{action=Login}/{id?}"
 ).WithOpenApi().RequireCors(myPolicy);
 
+rabbitMqHelper.Subscribe("test", Console.WriteLine);
 
 app.Run();

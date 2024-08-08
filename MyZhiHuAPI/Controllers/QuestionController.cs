@@ -54,6 +54,7 @@ public class QuestionController(DbHelper dbHelper) : BaseController
     }
 
     [HttpPost]
+    [RabbitMq(ChannelName = "notify")]
     public MessageModel<Question> Watch(QuestionWatch request)
     {
         using var conn = dbHelper.OpenConnection();

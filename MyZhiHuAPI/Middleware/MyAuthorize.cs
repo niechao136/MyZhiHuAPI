@@ -59,29 +59,12 @@ public static class MyAuthorizeMiddlewareExtensions
     }
 }
 
-public static class ServiceCollectionExtensions
-{
-    public static IServiceCollection AddMyAuthorize(this IServiceCollection services)
-    {
-        return services;
-    }
-
-    public static IServiceCollection AddMyAuthorize(this IServiceCollection services,
-        Action<MyAuthorizeOption> configure)
-    {
-        var option = new MyAuthorizeOption();
-        configure(option);
-        services.Configure(configure);
-        return services.AddMyAuthorize();
-    }
-}
-
 public class MyAuthorizeOption
 {
     public CSRedisClient? CsRedisClient { get; set; }
 }
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
 public class MyAuthorizeAttribute : Attribute
 {
     public string? Roles { get; set; }
