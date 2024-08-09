@@ -15,13 +15,13 @@ public class BaseController : Controller
     }
 
     [NonAction]
-    protected static MessageModel<T> Fail<T>(string message = "失败", int status = 500)
+    protected static MessageModel<T> Fail<T>(string message = "失败", StatusCode status = Models.StatusCode.Fail)
     {
         return MessageModel<T>.FailMsg(message, status);
     }
 
     [NonAction]
-    protected static PageModel<T> PageSuccess<T>(List<T> data, int page, int total, int size, int status = 200)
+    protected static PageModel<T> PageSuccess<T>(List<T> data, int page, int total, int size, StatusCode status = Models.StatusCode.Success)
     {
         return PageModel<T>.GetPage(true, page, total, size, data, status);
     }

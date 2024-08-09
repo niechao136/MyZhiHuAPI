@@ -35,7 +35,7 @@ public class QuestionController(DbHelper dbHelper) : BaseController
     {
         using var conn = dbHelper.OpenConnection();
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
-        if (token == "error") return Fail<Question>("令牌不存在或者令牌错误");
+        if (token == "error") return Fail<Question>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
         const string insert =
             """
@@ -54,12 +54,11 @@ public class QuestionController(DbHelper dbHelper) : BaseController
     }
 
     [HttpPost]
-    [RabbitMq(ChannelName = "notify")]
     public MessageModel<Question> Watch(QuestionWatch request)
     {
         using var conn = dbHelper.OpenConnection();
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
-        if (token == "error") return Fail<Question>("令牌不存在或者令牌错误");
+        if (token == "error") return Fail<Question>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
         var id = request.Id;
         var cancel = request.Cancel ?? false;

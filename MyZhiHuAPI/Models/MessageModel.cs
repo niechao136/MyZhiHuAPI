@@ -11,7 +11,7 @@ public class MessageModel<T>
     /// <summary>
     /// 状态码
     /// </summary>
-    public int Status { get; set; } = 200;
+    public StatusCode Status { get; set; } = StatusCode.Success;
 
     /// <summary>
     /// 操作是否成功
@@ -53,7 +53,7 @@ public class MessageModel<T>
     /// <param name="response">数据</param>
     /// <param name="status">状态码</param>
     /// <returns></returns>
-    private static MessageModel<T> Message(bool success, string msg, int status = 200, T? response = default)
+    private static MessageModel<T> Message(bool success, string msg, StatusCode status = StatusCode.Success, T? response = default)
     {
         return new MessageModel<T>
         {
@@ -72,7 +72,7 @@ public class MessageModel<T>
     /// <returns></returns>
     public static MessageModel<T> SuccessMsg(string msg, T response)
     {
-        return Message(true, msg, 200, response);
+        return Message(true, msg, StatusCode.Success, response);
     }
 
     /// <summary>
@@ -81,8 +81,31 @@ public class MessageModel<T>
     /// <param name="msg">消息</param>
     /// <param name="status">状态码</param>
     /// <returns></returns>
-    public static MessageModel<T> FailMsg(string msg, int status = 500)
+    public static MessageModel<T> FailMsg(string msg, StatusCode status = StatusCode.Fail)
     {
         return Message(false, msg, status);
     }
+}
+
+public enum StatusCode
+{
+    /// <summary>
+    /// 成功
+    /// </summary>
+    Success = 200,
+
+    /// <summary>
+    /// 直接返回登录页
+    /// </summary>
+    Redirect = 400,
+
+    /// <summary>
+    /// 跳出已登出提示
+    /// </summary>
+    Logout = 401,
+
+    /// <summary>
+    /// 失败
+    /// </summary>
+    Fail = 500
 }

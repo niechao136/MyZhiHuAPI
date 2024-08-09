@@ -10,7 +10,7 @@ public class PageModel<T>
     /// <summary>
     /// 状态码
     /// </summary>
-    public int Status { get; set; } = 200;
+    public StatusCode Status { get; set; } = StatusCode.Success;
 
     /// <summary>
     /// 操作是否成功
@@ -65,7 +65,7 @@ public class PageModel<T>
     /// <param name="data">数据</param>
     /// <param name="status">状态码</param>
     /// <returns></returns>
-    public static PageModel<T> GetPage(bool success, int page, int total, int size, List<T> data, int status = 200)
+    public static PageModel<T> GetPage(bool success, int page, int total, int size, List<T> data, StatusCode status = StatusCode.Success)
     {
         return new PageModel<T>
         {

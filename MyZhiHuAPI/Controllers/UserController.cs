@@ -42,7 +42,7 @@ public class UserController(DbHelper dbHelper) : BaseController
         if (request.Id == null)
         {
             var res = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
-            if (res == "error") return Fail<User>("令牌不存在或者令牌错误");
+            if (res == "error") return Fail<User>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
             id = int.Parse(res);
         }
         using var conn = dbHelper.OpenConnection();

@@ -13,32 +13,43 @@ public class MyAuthorizeMiddleware(RequestDelegate next, IOptions<MyAuthorizeOpt
     public async Task Invoke(HttpContext context)
     {
         var myAuthorize = context.GetEndpoint()!.Metadata.GetMetadata<MyAuthorizeAttribute>();
-        if (myAuthorize == null) await next(context);
-        var msg = "";
-        var jwtHandler = new JwtSecurityTokenHandler();
-        var token = context.Request.Headers.Authorization.ToString();
-        var roles = myAuthorize?.Roles?.Split(',');
-        if (token.IsNullOrEmpty() || !jwtHandler.CanReadToken(token)) msg = "令牌不存在或者令牌错误";
-        else if (!await _option.CsRedisClient!.ExistsAsync(token)) msg = "令牌已过期";
-        else if (roles != null && roles.Length != 0)
+        if (myAuthorize != null)
         {
+            var msg = "";
+            var code = StatusCode.Success;
+            var jwtHandler = new JwtSecurityTokenHandler();
+            var token = context.Request.Headers.Authorization.ToString();
+            var roles = myAuthorize.Roles?.Split(',');
+            if (token.IsNullOrEmpty() || !jwtHandler.CanReadToken(token))
+            {
+                msg = "令牌不存在或者令牌错误";
+                code = StatusCode.Redirect;
+            }
+            else if (!await _option.CsRedisClient!.ExistsAsync(token))
+            {
+                msg = "令牌已过期";
+                code = StatusCode.Logout;
+            }
+            else if (roles != null && roles.Length != 0)
+            {
 
+            }
+
+            if (msg != "")
+            {
+                var payload = MessageModel<string>.FailMsg(msg, code).ToJObject().ToString();
+
+                context.Response.ContentType = "application/json";
+                context.Response.StatusCode = 200;
+                await context.Response.WriteAsync(payload);
+                return;
+            }
+
+            var jwtToken = jwtHandler.ReadJwtToken(token);
+            var id = int.Parse(jwtToken.Claims.SingleOrDefault(s => s.Type == "UserId")?.Value!);
+            await _option.CsRedisClient!.ExpireAsync($"user_id:{id}", TimeSpan.FromMinutes(30));
+            await _option.CsRedisClient!.ExpireAsync(token, TimeSpan.FromMinutes(30));
         }
-
-        if (msg != "")
-        {
-            var payload = MessageModel<string>.FailMsg(msg).ToJObject().ToString();
-
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = 200;
-            await context.Response.WriteAsync(payload);
-            return;
-        }
-
-        var jwtToken = jwtHandler.ReadJwtToken(token);
-        var id = int.Parse(jwtToken.Claims.SingleOrDefault(s => s.Type == "UserId")?.Value!);
-        await _option.CsRedisClient!.ExpireAsync($"user_id:{id}", TimeSpan.FromMinutes(30));
-        await _option.CsRedisClient!.ExpireAsync(token, TimeSpan.FromMinutes(30));
 
         await next(context);
     }

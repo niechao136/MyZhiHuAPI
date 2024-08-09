@@ -36,11 +36,12 @@ public class CommitController(DbHelper dbHelper) : BaseController
     }
 
     [HttpPost]
+    [RabbitMq(Type = NotifyType.Commit)]
     public MessageModel<Commit> Add(CommitCreate request)
     {
         using var conn = dbHelper.OpenConnection();
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
-        if (token == "error") return Fail<Commit>("令牌不存在或者令牌错误");
+        if (token == "error") return Fail<Commit>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
         const string insert =
             """

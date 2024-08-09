@@ -1,12 +1,11 @@
-using System.Text;
 using System.Text.Json.Serialization;
 using CSRedis;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MyZhiHuAPI.Helpers;
 using MyZhiHuAPI.Middleware;
 using MyZhiHuAPI.Models;
+using MyZhiHuAPI.Service;
+using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,46 +22,6 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader();
     });
 });
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidIssuer = configuration["Jwt:Issuer"],
-        ValidateAudience = true,
-        ValidAudience = configuration["Jwt:Audience"],
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:SecretKey"]!)),
-        ClockSkew = TimeSpan.FromSeconds(30),
-        RequireExpirationTime = true
-    };
-    options.Events = new JwtBearerEvents
-    {
-        OnChallenge = context =>
-        {
-            context.HandleResponse();
-
-            var msg = "令牌不存在或者令牌错误";
-            if (context.AuthenticateFailure?.GetType() == typeof(SecurityTokenExpiredException))
-            {
-                msg = "令牌已过期";
-            }
-            var payload = MessageModel<string>.FailMsg(msg).ToJObject().ToString();
-
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = 200;
-            context.Response.WriteAsync(payload);
-
-            return Task.CompletedTask;
-        }
-    };
-});
-
-builder.Services.AddAuthorization();
 
 builder.Services.AddControllers(opt =>
 {
@@ -107,12 +66,17 @@ builder.Services.AddProblemDetails();
 builder.Services.AddApiVersioning();
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
-builder.Services.AddSingleton(new DbHelper(configuration));
+var dbHelper = new DbHelper(configuration);
+builder.Services.AddSingleton(dbHelper);
 builder.Services.AddSingleton(new JwtHelper(configuration));
 var rabbitMqHelper = new RabbitMqHelper(configuration);
 builder.Services.AddSingleton(rabbitMqHelper);
 var redisClient = new CSRedisClient(configuration["Redis:ConnectionString"]);
 builder.Services.AddSingleton(redisClient);
+var websocketHelp = new WebsocketHelp();
+builder.Services.AddSingleton(websocketHelp);
+var notifyService = new NotifyService(dbHelper, websocketHelp);
+builder.Services.AddSingleton(notifyService);
 
 var app = builder.Build();
 
@@ -125,17 +89,18 @@ if (app.Environment.IsDevelopment())
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// app.UseDefaultFiles();
-// app.UseStaticFiles();
-
 app.UseHttpsRedirection();
 
 app.UseRouting();
 
 app.UseCors(myPolicy);
 
-// app.UseAuthentication();
-// app.UseAuthorization();
+// app.UseRequestDecompression();
+
+app.UseWebSockets(new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromMinutes(5)
+});
 
 app.UseMyAuthorize(option =>
 {
@@ -151,6 +116,13 @@ app.MapControllerRoute(
     pattern: "{controller=Auth}/{action=Login}/{id?}"
 ).WithOpenApi().RequireCors(myPolicy);
 
-rabbitMqHelper.Subscribe("test", Console.WriteLine);
+rabbitMqHelper.Subscribe("NOTIFY", HandleNotify);
 
 app.Run();
+return;
+
+async void HandleNotify(string msg)
+{
+    var notify = JsonConvert.DeserializeObject<Notify<object>>(msg);
+    await notifyService.HandleNotify(notify!.Type, notify);
+}

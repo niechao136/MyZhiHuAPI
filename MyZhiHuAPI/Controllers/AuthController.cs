@@ -41,7 +41,7 @@ public class AuthController(CSRedisClient csRedisClient, DbHelper dbHelper, JwtH
     {
         var token = HttpContext.Request.Headers.Authorization.ToString();
         var res = GetUserId(token);
-        if (res == "error") return Fail<string>("令牌不存在或者令牌错误");
+        if (res == "error") return Fail<string>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var id = int.Parse(res);
         csRedisClient.Del([token, $"user_id:{id}"]);
         return Success<string>("退出成功", "");

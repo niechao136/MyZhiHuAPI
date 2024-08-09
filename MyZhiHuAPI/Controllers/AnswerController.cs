@@ -33,11 +33,12 @@ public class AnswerController(DbHelper dbHelper) : BaseController
     }
 
     [HttpPost]
+    [RabbitMq(Type = NotifyType.Answer)]
     public MessageModel<Answer> Add(AnswerCreate request)
     {
         using var conn = dbHelper.OpenConnection();
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
-        if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误");
+        if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
         const string insert =
             """
@@ -56,11 +57,12 @@ public class AnswerController(DbHelper dbHelper) : BaseController
     }
 
     [HttpPost]
+    [RabbitMq(Type = NotifyType.AnswerAgree)]
     public MessageModel<Answer> Agree(AnswerAgree request)
     {
         using var conn = dbHelper.OpenConnection();
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
-        if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误");
+        if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
         var id = request.Id;
         var cancel = request.Cancel ?? false;
@@ -80,7 +82,7 @@ public class AnswerController(DbHelper dbHelper) : BaseController
     {
         using var conn = dbHelper.OpenConnection();
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
-        if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误");
+        if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
         var id = request.Id;
         var cancel = request.Cancel ?? false;
