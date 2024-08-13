@@ -16,6 +16,7 @@ RUN dotnet build "MyZhiHuAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "MyZhiHuAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+COPY Config/aspnetapp.pfx /app/publish
 
 FROM base AS final
 WORKDIR /app
