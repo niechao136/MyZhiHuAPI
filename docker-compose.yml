@@ -11,8 +11,8 @@
       - ASPNETCORE_URLS=https://+:8080
       - ASPNETCORE_Kestrel__Certificates__Default__Password=abc123
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/app/aspnetapp.pfx
-#    volumes:
-#      - ./aspnetapp.pfx:/https/aspnetapp.pfx
+    volumes:
+      - ./aspnetapp.pfx:/https/aspnetapp.pfx
     build:
       context: .
       dockerfile: MyZhiHuAPI/Dockerfile
