@@ -19,7 +19,7 @@ public class MyAuthorizeMiddleware(RequestDelegate next, IOptions<MyAuthorizeOpt
             var code = StatusCode.Success;
             var jwtHandler = new JwtSecurityTokenHandler();
             var token = context.Request.Headers.Authorization.ToString();
-            var roles = myAuthorize.Roles?.Split(',');
+            var roles = myAuthorize.Roles;
             if (token.IsNullOrEmpty() || !jwtHandler.CanReadToken(token))
             {
                 msg = "令牌不存在或者令牌错误";
@@ -32,7 +32,13 @@ public class MyAuthorizeMiddleware(RequestDelegate next, IOptions<MyAuthorizeOpt
             }
             else if (roles != null && roles.Length != 0)
             {
-
+                var jwt = jwtHandler.ReadJwtToken(token);
+                var role = (UserRole)int.Parse(jwt.Claims.SingleOrDefault(s => s.Type == "UserRole")?.Value!);
+                if (!roles.Contains(role))
+                {
+                    msg = "权限不足";
+                    code = StatusCode.Fail;
+                }
             }
 
             if (msg != "")
@@ -78,5 +84,5 @@ public class MyAuthorizeOption
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
 public class MyAuthorizeAttribute : Attribute
 {
-    public string? Roles { get; set; }
+    public UserRole[]? Roles { get; set; }
 }

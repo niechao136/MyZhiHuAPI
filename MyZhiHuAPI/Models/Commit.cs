@@ -7,7 +7,7 @@ public class Commit
     public int Answer_id { get; set; }
     public int Parent_id { get; set; }
     public int Root_id { get; set; }
-    public string Content { get; set; }
+    public string? Content { get; set; }
     public string? Nickname { get; set; }
     public string? Parent { get; set; }
     public int[]? Children { get; set; }
@@ -27,5 +27,5 @@ public class CommitCreate
     public int Answer_id { get; set; }
     public int Root_id { get; set; }
     public int Parent_id { get; set; }
-    public string Content { get; set; }
+    public string? Content { get; set; }
 }

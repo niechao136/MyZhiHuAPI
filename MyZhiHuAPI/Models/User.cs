@@ -2,10 +2,11 @@ namespace MyZhiHuAPI.Models;
 
 public class User
 {
-    public int Id { get; set; }
-    public string Username { get; set; }
-    public string Password { get; set; }
-    public string Nickname { get; set; }
+    public int? Id { get; set; }
+    public string? Username { get; set; }
+    public string? Password { get; set; }
+    public UserRole? Role { get; set; }
+    public string? Nickname { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public int[]? Questions { get; set; }
@@ -20,6 +21,7 @@ public class UserRegister
 {
     public string? Username { get; set; }
     public string? Password { get; set; }
+    public UserRole? Role { get; set; }
     public string? Nickname { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
@@ -28,4 +30,10 @@ public class UserRegister
 public class UserInfo
 {
     public int? Id { get; set; }
+}
+
+public enum UserRole
+{
+    Admin = 1,
+    User = 2,
 }

@@ -20,13 +20,14 @@ public class UserController(DbHelper dbHelper) : BaseController
         if (users.Count > 0) return Fail<string>("用户名已存在");
         const string insert =
             """
-            INSERT INTO users (username, password, nickname, email, phone) 
-            VALUES (@username, @password, @nickname, @email, @phone)
+            INSERT INTO users (username, password, role, nickname, email, phone) 
+            VALUES (@username, @password, @role, @nickname, @email, @phone)
             """;
         conn.Execute(insert, new
         {
             username = request.Username,
             password = request.Password,
+            role = request.Role,
             nickname = request.Nickname,
             email = request.Email,
             phone = request.Phone
@@ -48,7 +49,7 @@ public class UserController(DbHelper dbHelper) : BaseController
         using var conn = dbHelper.OpenConnection();
         const string query =
             """
-            SELECT id, username, nickname, questions, answers, commits, remarks,
+            SELECT id, username, role, nickname, questions, answers, commits, remarks,
             watching_people, watching_question, update_at FROM users WHERE id = @id
             """;
         var users = conn.Query<User>(query, new { id }).ToList();

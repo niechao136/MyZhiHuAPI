@@ -6,7 +6,7 @@ public class Answer
     public int Owner_id { get; set; }
     public int Question_id { get; set; }
     public string? Title { get; set; }
-    public string Content { get; set; }
+    public string? Content { get; set; }
     public int[]? Commits { get; set; }
     public int[]? Agree { get; set; }
     public int[]? Remark { get; set; }
@@ -22,7 +22,7 @@ public class AnswerPage : PageRequest
 public class AnswerCreate
 {
     public int Question_id { get; set; }
-    public string Content { get; set; }
+    public string? Content { get; set; }
 }
 
 public class AnswerAgree

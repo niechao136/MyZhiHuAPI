@@ -2,19 +2,21 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using MyZhiHuAPI.Models;
 
 namespace MyZhiHuAPI.Helpers;
 
 public class JwtHelper(IConfiguration config)
 {
-    public string CreateToken(int userId)
+    public string CreateToken(int userId, UserRole role)
     {
         var claims = new[]
         {
             new Claim(ClaimTypes.Name, "u_admin"),
             new Claim(ClaimTypes.Role, "r_admin"),
             new Claim(JwtRegisteredClaimNames.Jti, "admin"),
-            new Claim("UserId", userId.ToString())
+            new Claim("UserId", userId.ToString()),
+            new Claim("UserRole", role.ToString()),
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:SecretKey"]!));
