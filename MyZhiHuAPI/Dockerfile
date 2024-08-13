@@ -6,22 +6,18 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["MyZhiHuAPI/MyZhiHuAPI.csproj", "MyZhiHuAPI/"]
-RUN ls
+COPY ["MyZhiHuAPI/Config/aspnetapp.pfx", "MyZhiHuAPI/"]
 RUN dotnet nuget remove source nuget.org
 RUN dotnet nuget add source https://nuget.cdn.azure.cn/v3/index.json -n cn
 RUN dotnet restore "MyZhiHuAPI/MyZhiHuAPI.csproj" --disable-parallel
 COPY . .
-RUN ls
 WORKDIR "/src/MyZhiHuAPI"
-RUN ls
 RUN dotnet build "MyZhiHuAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN ls
 RUN dotnet publish "MyZhiHuAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
-RUN ls
-COPY Config/aspnetapp.pfx /app/publish
+COPY aspnetapp.pfx /app/publish
 
 FROM base AS final
 WORKDIR /app
