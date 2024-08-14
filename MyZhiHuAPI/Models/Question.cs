@@ -23,6 +23,18 @@ public class QuestionCreate
     public string? Content { get; set; }
 }
 
+public class QuestionUpdate
+{
+    public int? Id { get; set; }
+    public string? Title { get; set; }
+    public string? Content { get; set; }
+}
+
+public class QuestionDelete
+{
+    public int? Id { get; set; }
+}
+
 public class QuestionWatch
 {
     public int Id { get; set; }

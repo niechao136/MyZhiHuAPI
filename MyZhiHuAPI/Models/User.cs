@@ -27,7 +27,21 @@ public class UserRegister
     public string? Phone { get; set; }
 }
 
+public class UserUpdate
+{
+    public int Id { get; set; }
+    public string? Nickname { get; set; }
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+}
+
 public class UserInfo
+{
+    public int? Id { get; set; }
+}
+
+
+public class UserDelete
 {
     public int? Id { get; set; }
 }

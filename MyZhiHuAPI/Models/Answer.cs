@@ -25,6 +25,17 @@ public class AnswerCreate
     public string? Content { get; set; }
 }
 
+public class AnswerUpdate
+{
+    public int Id { get; set; }
+    public string? Content { get; set; }
+}
+
+public class AnswerDelete
+{
+    public int Id { get; set; }
+}
+
 public class AnswerAgree
 {
     public int Id { get; set; }

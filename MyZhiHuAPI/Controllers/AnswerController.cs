@@ -57,6 +57,34 @@ public class AnswerController(DbHelper dbHelper) : BaseController
     }
 
     [HttpPost]
+    [MyAuthorize(Roles = [UserRole.Admin])]
+    public MessageModel<Answer> Update(AnswerUpdate request)
+    {
+        using var conn = dbHelper.OpenConnection();
+        const string update =
+            """
+            UPDATE answers SET content = @content, update_at = NOW() WHERE id = @id
+            RETURNING id, content, owner_id, question_id, commits, remark, update_at, create_at
+            """;
+        var answer = conn.QueryFirstOrDefault<Answer>(update, new
+        {
+            content = request.Content,
+            id = request.Id
+        });
+        return Success("修改成功", answer);
+    }
+
+    [HttpPost]
+    [MyAuthorize(Roles = [UserRole.Admin])]
+    public MessageModel<string> Delete(AnswerDelete request)
+    {
+        using var conn = dbHelper.OpenConnection();
+        const string delete = "UPDATE answers SET is_delete = TRUE, update_at = NOW() WHERE id = @id";
+        conn.Execute(delete, new { id = request.Id });
+        return Success("删除成功", string.Empty);
+    }
+
+    [HttpPost]
     [RabbitMq(Type = NotifyType.AnswerAgree)]
     public MessageModel<Answer> Agree(AnswerAgree request)
     {
@@ -78,7 +106,7 @@ public class AnswerController(DbHelper dbHelper) : BaseController
     }
     
     [HttpPost]
-    public MessageModel<Answer> Remark(AnswerAgree request)
+    public MessageModel<Answer> Remark(AnswerRemark request)
     {
         using var conn = dbHelper.OpenConnection();
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
