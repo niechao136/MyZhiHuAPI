@@ -48,7 +48,7 @@ public class RabbitMqMiddleware(RequestDelegate next, IOptions<RabbitMqOption> o
                         notify.Target = answer.Data;
                         notify.Type = NotifyType.Answer;
                         notify.Target_id = answer.Data!.Id;
-                        notify.Opeate_id = answer.Data!.Owner_id;
+                        notify.Operate_id = answer.Data!.Owner_id;
                     }
                     break;
                 case NotifyType.Commit:
@@ -59,7 +59,7 @@ public class RabbitMqMiddleware(RequestDelegate next, IOptions<RabbitMqOption> o
                         notify.Target = commit.Data;
                         notify.Type = NotifyType.Commit;
                         notify.Target_id = commit.Data!.Id;
-                        notify.Opeate_id = commit.Data!.Owner_id;
+                        notify.Operate_id = commit.Data!.Owner_id;
                     }
                     break;
                 case NotifyType.AnswerAgree:
@@ -84,7 +84,7 @@ public class RabbitMqMiddleware(RequestDelegate next, IOptions<RabbitMqOption> o
                             return;
                         }
                         var jwtToken = jwtHandler.ReadJwtToken(token);
-                        notify.Opeate_id = int.Parse(jwtToken.Claims.SingleOrDefault(s => s.Type == "UserId")?.Value!);
+                        notify.Operate_id = int.Parse(jwtToken.Claims.SingleOrDefault(s => s.Type == "UserId")?.Value!);
                     }
                     break;
                 default:

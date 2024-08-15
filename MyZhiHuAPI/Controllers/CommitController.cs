@@ -19,19 +19,11 @@ public class CommitController(DbHelper dbHelper) : BaseController
         var size = request.Size ?? 10;
         var answerId = request.Answer_id;
         var rootId = request.Root_id;
-        var query =
-            $"""
-             SELECT commits.id, content, children, agree, answer_id, parent_id, owner_id,
-                    root_id, commits.create_at, commits.update_at, users.nickname, parent.nickname AS parent
-             FROM commits
-                 LEFT JOIN users ON users.id = commits.owner_id
-                 LEFT JOIN users AS parent ON users.id = commits.parent_id
-             WHERE answer_id = @answerId AND root_id = @rootId
-             ORDER BY update_at LIMIT {size} OFFSET {page * size - size}
-             """;
-        var commits = conn.Query<Commit>(query, new { answerId, rootId }).ToList();
-        const string sql = "SELECT COUNT(DISTINCT id) FROM commits WHERE answer_id = @answer_id AND root_id = @rootId";
-        var total = conn.QueryFirstOrDefault<int>(sql, new { answerId, rootId });
+        var commits = conn.Query<Commit>(SqlHelper.CommitList, new
+        {
+            answerId, rootId, limit = size, offset = size * (page - 1)
+        }).ToList();
+        var total = conn.QueryFirstOrDefault<int>(SqlHelper.CommitCount, new { answerId, rootId });
         return PageSuccess(commits, page, total, size);
     }
 
@@ -43,13 +35,7 @@ public class CommitController(DbHelper dbHelper) : BaseController
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
         if (token == "error") return Fail<Commit>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
-        const string insert =
-            """
-            INSERT INTO commits (content, owner_id, answer_id, root_id, parent_id) 
-            VALUES (@content, @ownerId, @answerId, @rootId, @parentId)
-            RETURNING id, content, owner_id, answer_id, root_id, parent_id, update_at, create_at
-            """;
-        var answer = conn.QueryFirstOrDefault<Commit>(insert, new
+        var answer = conn.QueryFirstOrDefault<Commit>(SqlHelper.CommitInsert, new
         {
             parentId = request.Parent_id,
             rootId = request.Root_id,

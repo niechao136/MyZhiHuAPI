@@ -5,31 +5,25 @@ public class Notify<T>
     public int Id { get; set; }
     public int Owner_id { get; set; }
     public NotifyType Type { get; set; }
-    public int Opeate_id { get; set; }
+    public int Operate_id { get; set; }
     public int Target_id { get; set; }
     public T? Target { get; set; }
     public string? Nickname { get; set; }
     public string? Title { get; set; }
 }
 
-public class NotifyAnswer
-{
-    public int User_id { get; set; }
+public class NotifyQuery {
+    public int Owner_id { get; set; }
+    public int Operate_id { get; set; }
+    public NotifyType Type { get; set; }
+    public int Target_id { get; set; }
     public string? Nickname { get; set; }
     public string? Title { get; set; }
 }
 
-public class NotifyAgree
+public class NotifyPage: PageRequest
 {
-    public string? Nickname { get; set; }
-}
-
-public class NotifyCommit
-{
-    public int User_id { get; set; }
-    public string? Nickname { get; set; }
-    public string? Parent { get; set; }
-    public string? Owner { get; set; }
+    public int? Owner_id { get; set; }
 }
 
 public enum NotifyType

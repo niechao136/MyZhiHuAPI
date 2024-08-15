@@ -18,15 +18,13 @@ public class QuestionController(DbHelper dbHelper) : BaseController
         using var conn = dbHelper.OpenConnection();
         var page = request.Page ?? 1;
         var size = request.Size ?? 10;
-        const string isDelete = "is_delete = FALSE";
-        var filter = request.Owner_id == null ? "" : $" AND owner_id = {request.Owner_id}";
-        var query =
-            $"""
-             SELECT id, title, content, answers, watching, owner_id, create_at, update_at
-             FROM questions WHERE {isDelete + filter} ORDER BY update_at LIMIT {size} OFFSET {page * size - size}
-             """;
-        var questions = conn.Query<Question>(query).ToList();
-        var total = conn.QueryFirstOrDefault<int>($"SELECT COUNT(DISTINCT id) FROM questions WHERE {isDelete + filter}");
+        var query = SqlHelper.QuestionList(request.Owner_id, out var count);
+        var questions = conn.Query<Question>(query, new
+        {
+            limit = size,
+            offset = (page - 1) * size
+        }).ToList();
+        var total = conn.QueryFirstOrDefault<int>(count);
         return PageSuccess(questions, page, total, size);
     }
 
@@ -37,13 +35,7 @@ public class QuestionController(DbHelper dbHelper) : BaseController
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
         if (token == "error") return Fail<Question>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
-        const string insert =
-            """
-            INSERT INTO questions (title, content, owner_id) 
-            VALUES (@title, @content, @ownerId)
-            RETURNING id, title, content, owner_id, answers, watching, update_at, create_at
-            """;
-        var question = conn.QueryFirstOrDefault<Question>(insert, new
+        var question = conn.QueryFirstOrDefault<Question>(SqlHelper.QuestionInsert, new
         {
             title = request.Title,
             content = request.Content,
@@ -58,12 +50,7 @@ public class QuestionController(DbHelper dbHelper) : BaseController
     public MessageModel<Question> Update(QuestionUpdate request)
     {
         using var conn = dbHelper.OpenConnection();
-        const string update =
-            """
-            UPDATE questions SET title = @title, content = @content, update_at = NOW() WHERE id = @id
-            RETURNING id, title, content, owner_id, answers, watching, update_at, create_at
-            """;
-        var question = conn.QueryFirstOrDefault<Question>(update, new
+        var question = conn.QueryFirstOrDefault<Question>(SqlHelper.QuestionUpdate, new
         {
             title = request.Title,
             content = request.Content,
@@ -77,8 +64,7 @@ public class QuestionController(DbHelper dbHelper) : BaseController
     public MessageModel<string> Delete(QuestionDelete request)
     {
         using var conn = dbHelper.OpenConnection();
-        const string delete = "UPDATE questions SET is_delete = TRUE, update_at = NOW() WHERE id = @id";
-        conn.Execute(delete, new { id = request.Id });
+        conn.Execute(SqlHelper.QuestionDelete, new { id = request.Id });
         return Success("删除成功", string.Empty);
     }
 
@@ -91,13 +77,10 @@ public class QuestionController(DbHelper dbHelper) : BaseController
         var ownerId = int.Parse(token);
         var id = request.Id;
         var cancel = request.Cancel ?? false;
-        var action = cancel ? "array_remove" : "array_append";
-        var update =
-            $"""
-             UPDATE questions SET watching = {action}(watching, {ownerId}::INTEGER) WHERE id = @id
-             RETURNING id, title, content, owner_id, answers, watching, update_at, create_at
-             """;
-        var question = conn.QueryFirstOrDefault<Question>(update, new { id });
+        var question = conn.QueryFirstOrDefault<Question>(SqlHelper.QuestionWatch(cancel, "watching"), new
+        {
+            id, ownerId
+        });
 
         return Success((cancel ? "取消" : "") + "关注成功", question);
     }

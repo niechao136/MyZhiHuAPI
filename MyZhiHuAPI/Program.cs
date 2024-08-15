@@ -124,5 +124,5 @@ return;
 async void HandleNotify(string msg)
 {
     var notify = JsonConvert.DeserializeObject<Notify<object>>(msg);
-    await notifyService.HandleNotify(notify!.Type, notify);
+    await notifyService.HandleAsync(notify!.Type, notify);
 }

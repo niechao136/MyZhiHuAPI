@@ -15,20 +15,15 @@ public class AnswerController(DbHelper dbHelper) : BaseController
     public PageModel<Answer> List(AnswerPage request)
     {
         using var conn = dbHelper.OpenConnection();
+        var query = SqlHelper.AnswerList(request.Question_id, out var count);
         var page = request.Page ?? 1;
         var size = request.Size ?? 10;
-        var questionId = request.Question_id;
-        const string isDelete = "answers.is_delete = FALSE";
-        var filter = questionId == null ? "" : $" AND answers.question_id = {questionId}";
-        var query =
-            $"""
-             SELECT answers.id, answers.content, commits, remark, question_id, answers.owner_id,
-                    answers.create_at, answers.update_at, questions.title
-             FROM answers LEFT JOIN questions ON questions.id = answers.question_id
-             WHERE {isDelete + filter} ORDER BY update_at LIMIT {size} OFFSET {page * size - size}
-             """;
-        var answers = conn.Query<Answer>(query, new { questionId }).ToList();
-        var total = conn.QueryFirstOrDefault<int>($"SELECT COUNT(DISTINCT id) FROM answers WHERE {isDelete + filter}");
+        var answers = conn.Query<Answer>(query, new
+        {
+            limit = size,
+            offset = (page - 1) * size
+        }).ToList();
+        var total = conn.QueryFirstOrDefault<int>(count);
         return PageSuccess(answers, page, total, size);
     }
 
@@ -40,13 +35,7 @@ public class AnswerController(DbHelper dbHelper) : BaseController
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
         if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
-        const string insert =
-            """
-            INSERT INTO answers (content, owner_id, question_id) 
-            VALUES (@content, @ownerId, @questionId)
-            RETURNING id, content, owner_id, question_id, commits, remark, update_at, create_at
-            """;
-        var answer = conn.QueryFirstOrDefault<Answer>(insert, new
+        var answer = conn.QueryFirstOrDefault<Answer>(SqlHelper.AnswerInsert, new
         {
             questionId = request.Question_id,
             content = request.Content,
@@ -61,12 +50,7 @@ public class AnswerController(DbHelper dbHelper) : BaseController
     public MessageModel<Answer> Update(AnswerUpdate request)
     {
         using var conn = dbHelper.OpenConnection();
-        const string update =
-            """
-            UPDATE answers SET content = @content, update_at = NOW() WHERE id = @id
-            RETURNING id, content, owner_id, question_id, commits, remark, update_at, create_at
-            """;
-        var answer = conn.QueryFirstOrDefault<Answer>(update, new
+        var answer = conn.QueryFirstOrDefault<Answer>(SqlHelper.AnswerUpdate, new
         {
             content = request.Content,
             id = request.Id
@@ -79,8 +63,7 @@ public class AnswerController(DbHelper dbHelper) : BaseController
     public MessageModel<string> Delete(AnswerDelete request)
     {
         using var conn = dbHelper.OpenConnection();
-        const string delete = "UPDATE answers SET is_delete = TRUE, update_at = NOW() WHERE id = @id";
-        conn.Execute(delete, new { id = request.Id });
+        conn.Execute(SqlHelper.AnswerDelete, new { id = request.Id });
         return Success("删除成功", string.Empty);
     }
 
@@ -94,13 +77,10 @@ public class AnswerController(DbHelper dbHelper) : BaseController
         var ownerId = int.Parse(token);
         var id = request.Id;
         var cancel = request.Cancel ?? false;
-        var action = cancel ? "array_remove" : "array_append";
-        var update =
-            $"""
-             UPDATE answers SET agree = {action}(agree, {ownerId}::INTEGER) WHERE id = @id
-             RETURNING id, content, owner_id, question_id, agree, remark, update_at, create_at
-             """;
-        var question = conn.QueryFirstOrDefault<Answer>(update, new { id });
+        var question = conn.QueryFirstOrDefault<Answer>(SqlHelper.AnswerAgree(cancel, "agree"), new
+        {
+            id, ownerId
+        });
 
         return Success((cancel ? "取消" : "") + "点赞成功", question);
     }
@@ -114,13 +94,10 @@ public class AnswerController(DbHelper dbHelper) : BaseController
         var ownerId = int.Parse(token);
         var id = request.Id;
         var cancel = request.Cancel ?? false;
-        var action = cancel ? "array_remove" : "array_append";
-        var update =
-            $"""
-             UPDATE answers SET remark = {action}(remark, {ownerId}::INTEGER) WHERE id = @id
-             RETURNING id, content, owner_id, question_id, agree, remark, update_at, create_at
-             """;
-        var question = conn.QueryFirstOrDefault<Answer>(update, new { id });
+        var question = conn.QueryFirstOrDefault<Answer>(SqlHelper.AnswerAgree(cancel, "remark"), new
+        {
+            id, ownerId
+        });
 
         return Success((cancel ? "取消" : "") + "收藏成功", question);
     }
