@@ -25,9 +25,9 @@ public class NotifyController(DbHelper dbHelper, WebsocketHelp websocketHelp, No
             limit = size,
             offset = (page - 1) * size
         })).ToList();
-        list = list.Select(item => notifyService.BuildAsync(item).Result).ToList();
+        var notifies = list.Select(item => notifyService.BuildAsync(item).Result).ToList();
         var total = await conn.ExecuteScalarAsync<int>(SqlHelper.NotifyCount, new { id = request.Owner_id });
-        return PageSuccess(list, page, total, size);
+        return PageSuccess(notifies, page, total, size);
     }
 
     [HttpPost]

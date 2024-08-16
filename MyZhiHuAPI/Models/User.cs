@@ -15,6 +15,8 @@ public class User
     public int[]? Remarks { get; set; }
     public int[]? Watching_people { get; set; }
     public int[]? Watching_question { get; set; }
+    public int[]? Subscribers { get; set; }
+    public User? Owner { get; set; }
 }
 
 public class UserRegister
@@ -44,6 +46,12 @@ public class UserInfo
 public class UserDelete
 {
     public int? Id { get; set; }
+}
+
+public class UserWatch
+{
+    public int Id { get; set; }
+    public bool? Cancel { get; set; }
 }
 
 public enum UserRole

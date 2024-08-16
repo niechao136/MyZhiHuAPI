@@ -3,11 +3,39 @@ namespace MyZhiHuAPI.Helpers;
 public static class SqlHelper
 {
     #region User
-    public const string UserReturn =
+
+    private const string UserReturn =
         """
-        users.id, users.username, users.role, users.nickname, users.email, users.phone, users.questions, users.answers,
-        users.commits, users.remarks, users.watching_people, users.watching_question, users.update_at, users.create_at
+        users.id, users.username, users.role, users.nickname, users.email, users.phone,
+        users.questions, users.answers, users.commits, users.remarks, users.watching_people,
+        users.watching_question, users.subscribers, users.update_at, users.create_at
         """;
+
+    public const string UserInfo = $"SELECT {UserReturn} FROM users WHERE id = @id";
+    public const string UserInsert =
+        """
+        INSERT INTO users (username, password, role, nickname, email, phone) 
+        VALUES (@username, @password, @role, @nickname, @email, @phone)
+        """;
+
+    public const string UserAdd = $"{UserInsert} RETURNING {UserReturn}";
+    public const string UserUpdate =
+        $"""
+        UPDATE users SET nickname = @nickname, email = @email, phone = @phone, update_at = NOW() WHERE id = @id
+        RETURNING {UserReturn}
+        """;
+    public const string UserDelete =
+        $"UPDATE users SET is_delete = TRUE, update_at = NOW() WHERE id = @id RETURNING {UserReturn}";
+    public const string UserQuery = "SELECT id FROM users WHERE username = @username AND is_delete = FALSE";
+    public const string UserLogin =
+        "SELECT id, role FROM users WHERE username = @username AND password = @password AND is_delete = FALSE";
+
+    public static string UserSet(bool cancel, string param, bool batch = false)
+    {
+        var action = cancel ? "array_remove" : "array_append";
+        var value = batch ? "ANY(@ids)" : "@id";
+        return $"UPDATE users SET {param} = {action}({param}, @target::INTEGER) WHERE id = {value} RETURNING {UserReturn}";
+    }
     #endregion
     #region Question
 
@@ -34,11 +62,12 @@ public static class SqlHelper
         UPDATE questions SET title = @title, content = @content, update_at = NOW()
         WHERE id = @id RETURNING {QuestionReturn}
         """;
-    public const string QuestionDelete = "UPDATE questions SET is_delete = TRUE, update_at = NOW() WHERE id = @id";
-    public static string QuestionWatch(bool cancel, string param)
+    public const string QuestionDelete =
+        $"UPDATE questions SET is_delete = TRUE, update_at = NOW() WHERE id = @id RETURNING {QuestionReturn}";
+    public static string QuestionSet(bool cancel, string param)
     {
         var action = cancel ? "array_remove" : "array_append";
-        return $"UPDATE questions SET {param} = {action}({param}, @ownerId::INTEGER) WHERE id = @id RETURNING {QuestionReturn}";
+        return $"UPDATE questions SET {param} = {action}({param}, @target::INTEGER) WHERE id = @id RETURNING {QuestionReturn}";
     }
         
     #endregion
@@ -71,9 +100,11 @@ public static class SqlHelper
     public const string AnswerUpdate =
         $"UPDATE answers SET content = @content, update_at = NOW() WHERE id = @id RETURNING {AnswerReturn}";
     // 删除回答
-    public const string AnswerDelete = "UPDATE answers SET is_delete = TRUE, update_at = NOW() WHERE id = @id";
+    public static string AnswerDelete(string param = "id") {
+        return $"UPDATE answers SET is_delete = TRUE, update_at = NOW() WHERE {param} = @id RETURNING {AnswerReturn}";
+    }
     // 点赞/取消点赞回答 与 收藏/取消收藏回答
-    public static string AnswerAgree(bool cancel, string param)
+    public static string AnswerSet(bool cancel, string param)
     {
         var action = cancel ? "array_remove" : "array_append";
         return $"UPDATE answers SET {param} = {action}({param}, @ownerId::INTEGER) WHERE id = @id RETURNING {AnswerReturn}";
@@ -85,7 +116,7 @@ public static class SqlHelper
     private const string CommitReturn =
         """
         commits.id, commits.content, commits.owner_id, commits.answer_id, commits.root_id,
-        commits.parent_id, commits.update_at, commits.create_at
+        commits.parent_id, commits.children, commits.agree, commits.update_at, commits.create_at
         """;
     // 获取评论列表
     public const string CommitList =
@@ -104,6 +135,18 @@ public static class SqlHelper
         VALUES (@content, @ownerId, @answerId, @rootId, @parentId) RETURNING {CommitReturn}
         """;
     public const string CommitInfo = $"SELECT {CommitReturn} FROM commits WHERE id = @id";
+
+    public static string CommitSet(bool cancel, string param)
+    {
+        var action = cancel ? "array_remove" : "array_append";
+        return $"UPDATE commits SET {param} = {action}({param}, @ownerId::INTEGER) WHERE id = @id RETURNING {CommitReturn}";
+    }
+
+    public static string CommitDelete(string param = "id", bool batch = false)
+    {
+        var value = batch ? "ANY(@ids)" : "@id";
+        return $"UPDATE commits SET is_delete = TRUE, update_at = NOW() WHERE {param} = {value}";
+    }
     #endregion
     #region Notify
     // 新增通知

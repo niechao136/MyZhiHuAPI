@@ -12,6 +12,8 @@ public class Answer
     public int[]? Remark { get; set; }
     public DateTime Create_at { get; set; }
     public DateTime Update_at { get; set; }
+    public Question? Question { get; set; }
+    public User? User { get; set; }
 }
 
 public class AnswerPage : PageRequest

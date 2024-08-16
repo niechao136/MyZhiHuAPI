@@ -12,45 +12,53 @@ namespace MyZhiHuAPI.Controllers;
 public class AnswerController(DbHelper dbHelper) : BaseController
 {
     [HttpPost]
-    public PageModel<Answer> List(AnswerPage request)
+    public async Task<PageModel<Answer>> List(AnswerPage request)
     {
-        using var conn = dbHelper.OpenConnection();
+        await using var conn = dbHelper.OpenConnection();
         var query = SqlHelper.AnswerList(request.Question_id, out var count);
         var page = request.Page ?? 1;
         var size = request.Size ?? 10;
-        var answers = conn.Query<Answer>(query, new
+        var answers = (await conn.QueryAsync<Answer>(query, new
         {
             limit = size,
             offset = (page - 1) * size
-        }).ToList();
-        var total = conn.QueryFirstOrDefault<int>(count);
+        })).ToList();
+        var total = await conn.QueryFirstOrDefaultAsync<int>(count);
         return PageSuccess(answers, page, total, size);
     }
 
     [HttpPost]
     [RabbitMq(Type = NotifyType.Answer)]
-    public MessageModel<Answer> Add(AnswerCreate request)
+    public async Task<MessageModel<Answer>> Add(AnswerCreate request)
     {
-        using var conn = dbHelper.OpenConnection();
+        await using var conn = dbHelper.OpenConnection();
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
         if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
-        var answer = conn.QueryFirstOrDefault<Answer>(SqlHelper.AnswerInsert, new
+        var answer = await conn.QueryFirstOrDefaultAsync<Answer>(SqlHelper.AnswerInsert, new
         {
             questionId = request.Question_id,
             content = request.Content,
             ownerId
         });
 
+        var question = await conn.QueryFirstOrDefaultAsync<Question>(SqlHelper.QuestionSet(false, "answers"), new
+        {
+            id = request.Question_id,
+            target = answer!.Id
+        });
+
+        answer.Question = question;
+
         return Success("新增成功", answer);
     }
 
     [HttpPost]
     [MyAuthorize(Roles = [UserRole.Admin])]
-    public MessageModel<Answer> Update(AnswerUpdate request)
+    public async Task<MessageModel<Answer>> Update(AnswerUpdate request)
     {
-        using var conn = dbHelper.OpenConnection();
-        var answer = conn.QueryFirstOrDefault<Answer>(SqlHelper.AnswerUpdate, new
+        await using var conn = dbHelper.OpenConnection();
+        var answer = await conn.QueryFirstOrDefaultAsync<Answer>(SqlHelper.AnswerUpdate, new
         {
             content = request.Content,
             id = request.Id
@@ -60,24 +68,25 @@ public class AnswerController(DbHelper dbHelper) : BaseController
 
     [HttpPost]
     [MyAuthorize(Roles = [UserRole.Admin])]
-    public MessageModel<string> Delete(AnswerDelete request)
+    public async Task<MessageModel<string>> Delete(AnswerDelete request)
     {
-        using var conn = dbHelper.OpenConnection();
-        conn.Execute(SqlHelper.AnswerDelete, new { id = request.Id });
+        await using var conn = dbHelper.OpenConnection();
+        await conn.ExecuteAsync(SqlHelper.AnswerDelete(), new { id = request.Id });
+        await conn.ExecuteAsync(SqlHelper.CommitDelete("answer_id"), new { id = request.Id });
         return Success("删除成功", string.Empty);
     }
 
     [HttpPost]
     [RabbitMq(Type = NotifyType.AnswerAgree)]
-    public MessageModel<Answer> Agree(AnswerAgree request)
+    public async Task<MessageModel<Answer>> Agree(AnswerAgree request)
     {
-        using var conn = dbHelper.OpenConnection();
+        await using var conn = dbHelper.OpenConnection();
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
         if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
         var id = request.Id;
         var cancel = request.Cancel ?? false;
-        var question = conn.QueryFirstOrDefault<Answer>(SqlHelper.AnswerAgree(cancel, "agree"), new
+        var question = await conn.QueryFirstOrDefaultAsync<Answer>(SqlHelper.AnswerSet(cancel, "agree"), new
         {
             id, ownerId
         });
@@ -86,19 +95,27 @@ public class AnswerController(DbHelper dbHelper) : BaseController
     }
     
     [HttpPost]
-    public MessageModel<Answer> Remark(AnswerRemark request)
+    public async Task<MessageModel<Answer>> Remark(AnswerRemark request)
     {
-        using var conn = dbHelper.OpenConnection();
+        await using var conn = dbHelper.OpenConnection();
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
         if (token == "error") return Fail<Answer>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
         var id = request.Id;
         var cancel = request.Cancel ?? false;
-        var question = conn.QueryFirstOrDefault<Answer>(SqlHelper.AnswerAgree(cancel, "remark"), new
+        var answer = await conn.QueryFirstOrDefaultAsync<Answer>(SqlHelper.AnswerSet(cancel, "remark"), new
         {
             id, ownerId
         });
 
-        return Success((cancel ? "取消" : "") + "收藏成功", question);
+        var user = await conn.QueryFirstOrDefaultAsync<User>(SqlHelper.UserSet(cancel, "remarks"), new
+        {
+            id = ownerId,
+            target = id
+        });
+
+        answer!.User = user;
+
+        return Success((cancel ? "取消" : "") + "收藏成功", answer);
     }
 }

@@ -12,18 +12,12 @@ public class UserController(DbHelper dbHelper) : BaseController
 {
 
     [HttpPost]
-    public MessageModel<string> Register(UserRegister request)
+    public async Task<MessageModel<string>> Register(UserRegister request)
     {
-        using var conn = dbHelper.OpenConnection();
-        const string query = "SELECT id FROM users WHERE username = @username";
-        var users = conn.Query<int>(query, new { username = request.Username }).ToList();
+        await using var conn = dbHelper.OpenConnection();
+        var users = (await conn.QueryAsync<int>(SqlHelper.UserQuery, new { username = request.Username })).ToList();
         if (users.Count > 0) return Fail<string>("用户名已存在");
-        const string insert =
-            """
-            INSERT INTO users (username, password, role, nickname, email, phone) 
-            VALUES (@username, @password, @role, @nickname, @email, @phone)
-            """;
-        conn.Execute(insert, new
+        await conn.ExecuteAsync(SqlHelper.UserInsert, new
         {
             username = request.Username,
             password = request.Password,
@@ -37,7 +31,7 @@ public class UserController(DbHelper dbHelper) : BaseController
 
     [HttpPost]
     [MyAuthorize]
-    public MessageModel<User> Info(UserInfo request)
+    public async Task<MessageModel<User>> Info(UserInfo request)
     {
         var id = request.Id;
         if (request.Id == null)
@@ -46,32 +40,20 @@ public class UserController(DbHelper dbHelper) : BaseController
             if (res == "error") return Fail<User>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
             id = int.Parse(res);
         }
-        using var conn = dbHelper.OpenConnection();
-        const string query =
-            """
-            SELECT id, username, role, nickname, email, phone, questions, answers, commits, remarks,
-            watching_people, watching_question, update_at, create_at FROM users WHERE id = @id
-            """;
-        var users = conn.Query<User>(query, new { id }).ToList();
+
+        await using var conn = dbHelper.OpenConnection();
+        var users = (await conn.QueryAsync<User>(SqlHelper.UserInfo, new { id })).ToList();
         return users.Count == 0 ? Fail<User>("用户名不存在") : Success("获取成功", users[0]);
     }
 
     [HttpPost]
     [MyAuthorize(Roles = [UserRole.Admin])]
-    public MessageModel<User> Add(UserRegister request)
+    public async Task<MessageModel<User>> Add(UserRegister request)
     {
-        using var conn = dbHelper.OpenConnection();
-        const string query = "SELECT id FROM users WHERE username = @username";
-        var users = conn.Query<int>(query, new { username = request.Username }).ToList();
+        await using var conn = dbHelper.OpenConnection();
+        var users = (await conn.QueryAsync<int>(SqlHelper.UserQuery, new { username = request.Username })).ToList();
         if (users.Count > 0) return Fail<User>("用户名已存在");
-        const string insert =
-            """
-            INSERT INTO users (username, password, role, nickname, email, phone) 
-            VALUES (@username, @password, @role, @nickname, @email, @phone)
-            RETURNING id, username, role, nickname, email, phone, questions, answers, commits, remarks,
-            watching_people, watching_question, update_at, create_at
-            """;
-        var user = conn.QueryFirstOrDefault<User>(insert, new
+        var user = await conn.QuerySingleOrDefaultAsync<User>(SqlHelper.UserAdd, new
         {
             username = request.Username,
             password = request.Password,
@@ -86,16 +68,10 @@ public class UserController(DbHelper dbHelper) : BaseController
 
     [HttpPost]
     [MyAuthorize(Roles = [UserRole.Admin])]
-    public MessageModel<User> Update(UserUpdate request)
+    public async Task<MessageModel<User>> Update(UserUpdate request)
     {
-        using var conn = dbHelper.OpenConnection();
-        const string update =
-            """
-            UPDATE users SET nickname = @nickname, email = @email, phone = @phone, update_at = NOW() WHERE id = @id
-            RETURNING id, username, role, nickname, email, phone, questions, answers, commits, remarks,
-            watching_people, watching_question, update_at, create_at
-            """;
-        var user = conn.QueryFirstOrDefault<User>(update, new
+        await using var conn = dbHelper.OpenConnection();
+        var user = await conn.QuerySingleOrDefaultAsync<User>(SqlHelper.UserUpdate, new
         {
             id = request.Id,
             nickname = request.Nickname,
@@ -108,11 +84,51 @@ public class UserController(DbHelper dbHelper) : BaseController
 
     [HttpPost]
     [MyAuthorize(Roles = [UserRole.Admin])]
-    public MessageModel<string> Delete(UserDelete request)
+    public async Task<MessageModel<string>> Delete(UserDelete request)
     {
-        using var conn = dbHelper.OpenConnection();
-        const string delete = "UPDATE users SET is_delete = TRUE, update_at = NOW() WHERE id = @id";
-        conn.Execute(delete, new { id = request.Id });
+        await using var conn = dbHelper.OpenConnection();
+        var user = await conn.QuerySingleOrDefaultAsync<User>(SqlHelper.UserDelete, new { id = request.Id });
+        var watch = user!.Watching_people ?? [];
+        var subscribers = user.Subscribers ?? [];
+        if (watch.Length > 0)
+        {
+            await conn.ExecuteAsync(SqlHelper.UserSet(true, "subscribers", true), new
+            {
+                ids = watch,
+                target = request.Id
+            });
+        }
+        if (subscribers.Length > 0)
+        {
+            await conn.ExecuteAsync(SqlHelper.UserSet(true, "watching_people", true), new
+            {
+                ids = subscribers,
+                target = request.Id
+            });
+        }
         return Success("删除成功", string.Empty);
+    }
+
+    [HttpPost]
+    [MyAuthorize]
+    public async Task<MessageModel<User>> Watch(UserWatch request)
+    {
+        await using var conn = dbHelper.OpenConnection();
+        var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        if (token == "error") return Fail<User>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
+        var id = int.Parse(token);
+        var target = request.Id;
+        var cancel = request.Cancel ?? false;
+        var user = await conn.QueryFirstOrDefaultAsync<User>(SqlHelper.UserSet(cancel, "watching_people"), new
+        {
+            id,
+            target
+        });
+        await conn.ExecuteAsync(SqlHelper.UserSet(cancel, "subscribers"), new
+        {
+            id = target,
+            target = id
+        });
+        return Success((cancel ? "取消" : "") + "关注成功", user);
     }
 }

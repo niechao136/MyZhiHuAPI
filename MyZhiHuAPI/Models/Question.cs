@@ -10,6 +10,7 @@ public class Question
     public int[]? Watching { get; set; }
     public DateTime Create_at { get; set; }
     public DateTime Update_at { get; set; }
+    public User? User { get; set; }
 }
 
 public class QuestionPage: PageRequest
