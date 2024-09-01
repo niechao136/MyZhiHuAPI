@@ -77,6 +77,8 @@ var websocketHelp = new WebsocketHelp();
 builder.Services.AddSingleton(websocketHelp);
 var notifyService = new NotifyService(dbHelper, websocketHelp);
 builder.Services.AddSingleton(notifyService);
+var minio = new MinioHelper(configuration);
+builder.Services.AddSingleton(minio);
 
 var app = builder.Build();
 
