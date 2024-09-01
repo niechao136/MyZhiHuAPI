@@ -17,7 +17,7 @@ public class MinioHelper(IConfiguration configuration)
             .WithObjectSize(fileStream.Length)
             .WithObject(fileName)
             .WithStreamData(fileStream));
-        return $"http://{configuration["Minio:endpoint"]}/{configuration["Minio:bucketName"]}/{fileName}";
+        return $"https://{configuration["Minio:endpoint"]?.Replace(":9000", "")}/{configuration["Minio:bucketName"]}/{fileName}";
     }
 
 }
