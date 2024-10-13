@@ -85,4 +85,5 @@ public class PageRequest
     public int? Size { get; set; } = 10;
     public string? Sort { get; set; }
     public string? Order { get; set; }
+    public string? Keyword { get; set; }
 }

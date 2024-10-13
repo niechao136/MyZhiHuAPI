@@ -1,8 +1,11 @@
 using Dapper;
+using JiebaNet.Segmenter;
+using JiebaNet.Segmenter.Common;
 using Microsoft.AspNetCore.Mvc;
 using MyZhiHuAPI.Helpers;
 using MyZhiHuAPI.Middleware;
 using MyZhiHuAPI.Models;
+using NpgsqlTypes;
 
 namespace MyZhiHuAPI.Controllers;
 
@@ -18,11 +21,11 @@ public class QuestionController(DbHelper dbHelper) : BaseController
         await using var conn = dbHelper.OpenConnection();
         var page = request.Page ?? 1;
         var size = request.Size ?? 10;
-        var query = SqlHelper.QuestionList(request.Owner_id, out var count);
+        var query = SqlHelper.QuestionList(request.Owner_id, request.Keyword, out var count);
         var questions = (await conn.QueryAsync<Question>(query, new
         {
             limit = size,
-            offset = (page - 1) * size
+            offset = (page - 1) * size,
         })).ToList();
         var total = await conn.QuerySingleOrDefaultAsync<int>(count);
         return PageSuccess(questions, page, total, size);
@@ -35,11 +38,17 @@ public class QuestionController(DbHelper dbHelper) : BaseController
         var token = GetUserId(HttpContext.Request.Headers.Authorization.ToString());
         if (token == "error") return Fail<Question>("令牌不存在或者令牌错误", Models.StatusCode.Redirect);
         var ownerId = int.Parse(token);
+        var segmenter = new JiebaSegmenter();
+        var title = segmenter.CutForSearch(request.Title).Join(" ");
+        var content = segmenter.CutForSearch(request.Content).Join(" ");
+        var vector = title + " " + content;
+        var search = NpgsqlTsVector.Parse(vector);
         var question = await conn.QuerySingleOrDefaultAsync<Question>(SqlHelper.QuestionInsert, new
         {
             title = request.Title,
-            content = request.Content,
-            ownerId
+            content = request.Html,
+            ownerId,
+            search
         });
         var user = await conn.QuerySingleOrDefaultAsync<User>(SqlHelper.UserSet(false, "questions"), new
         {

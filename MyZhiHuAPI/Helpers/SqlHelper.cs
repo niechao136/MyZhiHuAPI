@@ -1,3 +1,6 @@
+using JiebaNet.Segmenter;
+using JiebaNet.Segmenter.Common;
+
 namespace MyZhiHuAPI.Helpers;
 
 public static class SqlHelper
@@ -45,17 +48,28 @@ public static class SqlHelper
         questions.watching, questions.update_at, questions.create_at
         """;
 
-    public static string QuestionList(int? ownerId, out string count)
+    public static string QuestionList(int? ownerId, string? keyword, out string count)
     {
         const string isDelete = "is_delete = FALSE";
         var filter = ownerId == null ? "" : $" AND owner_id = {ownerId}";
-        count = $"SELECT COUNT(DISTINCT id) FROM questions WHERE {isDelete + filter}";
-        return $"SELECT {QuestionReturn} FROM questions WHERE {isDelete + filter} ORDER BY update_at LIMIT @limit OFFSET @offset";
+        if (keyword == null)
+        {
+            count = $"SELECT COUNT(DISTINCT id) FROM questions WHERE {isDelete + filter}";
+            return $"SELECT {QuestionReturn} FROM questions WHERE {isDelete + filter} ORDER BY update_at LIMIT @limit OFFSET @offset";
+        }
+        var segmenter = new JiebaSegmenter();
+        var search = segmenter.CutForSearch(keyword.Trim()).Where(o => o.Trim() != "").Join("|");
+        count = $"SELECT COUNT(DISTINCT id) FROM questions WHERE {isDelete + filter} AND questions.search @@ to_tsquery('{search}')";
+        return
+            $"""
+            SELECT {QuestionReturn} FROM questions, to_tsquery('{search}') query WHERE {isDelete + filter} 
+            AND questions.search @@ query ORDER BY ts_rank(questions.search, query) DESC LIMIT @limit OFFSET @offset
+            """;
     }
     public const string QuestionInsert =
         $"""
-        INSERT INTO questions (title, content, owner_id) 
-        VALUES (@title, @content, @ownerId) RETURNING {QuestionReturn}
+        INSERT INTO questions (title, content, owner_id, search) 
+        VALUES (@title, @content, @ownerId, @search) RETURNING {QuestionReturn}
         """;
     public const string QuestionUpdate =
         $"""

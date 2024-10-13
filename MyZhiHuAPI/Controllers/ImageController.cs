@@ -10,7 +10,6 @@ namespace MyZhiHuAPI.Controllers;
 public class ImageController(MinioHelper minioHelper) : BaseController
 {
     [HttpPost]
-    [Obsolete("Obsolete")]
     public async Task<MessageModel<string>> Upload(List<IFormFile> file)
     {
         var filePath = Path.GetTempFileName();
