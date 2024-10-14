@@ -69,7 +69,7 @@ public static class SqlHelper
     public const string QuestionInsert =
         $"""
         INSERT INTO questions (title, content, owner_id, search) 
-        VALUES (@title, @content, @ownerId, @search) RETURNING {QuestionReturn}
+        VALUES (@title, @content, @ownerId, @search::tsvector) RETURNING {QuestionReturn}
         """;
     public const string QuestionUpdate =
         $"""
