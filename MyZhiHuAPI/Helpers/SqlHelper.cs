@@ -59,11 +59,11 @@ public static class SqlHelper
         }
         var segmenter = new JiebaSegmenter();
         var search = segmenter.CutForSearch(keyword.Trim()).Where(o => o.Trim() != "").Join("|");
-        count = $"SELECT COUNT(DISTINCT id) FROM questions WHERE {isDelete + filter} AND questions.search @@ to_tsquery('{search}')";
+        count = $"SELECT COUNT(DISTINCT id) FROM questions WHERE {isDelete + filter} AND questions.search @@ '{search}'::tsquery";
         return
             $"""
-            SELECT {QuestionReturn} FROM questions, to_tsquery('{search}') query WHERE {isDelete + filter} 
-            AND questions.search @@ query ORDER BY ts_rank(questions.search, query) DESC LIMIT @limit OFFSET @offset
+            SELECT {QuestionReturn} FROM questions WHERE {isDelete + filter} 
+            AND questions.search @@ '{search}'::tsquery ORDER BY ts_rank(questions.search, '{search}'::tsquery) DESC LIMIT @limit OFFSET @offset
             """;
     }
     public const string QuestionInsert =
